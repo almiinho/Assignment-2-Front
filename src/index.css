@@ -1,0 +1,9 @@
+:root{--accent:#2b6cb0}
+body{font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;margin:20px;color:#111}
+.app-root{max-width:720px;margin:0 auto}
+.stepper-nav{display:flex;gap:8px;margin-bottom:16px}
+.stepper-nav button{padding:8px 12px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer}
+.stepper-nav button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.step-content{border:1px solid #eee;padding:16px;border-radius:8px}
+.controls{margin-top:12px}
+.controls button{margin-right:8px}
