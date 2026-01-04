@@ -4,9 +4,25 @@ import { Stepper, Step, StepNav, StepIndicator, useStepper } from '../lib/Steppe
 function Summary() {
   const { data } = useStepper()
   return (
-    <div>
-      <h3>Summary</h3>
-      <pre>{JSON.stringify(data, null, 2)}</pre>
+    <div className="summary">
+      <h3>Registration Complete</h3>
+      <p style={{color: '#666', marginBottom: '20px'}}>Here's a summary of your information:</p>
+      
+      <div className="summary-grid">
+        <div className="summary-item">
+          <div className="summary-label">Full Name</div>
+          <div className="summary-value">{data.name || '—'}</div>
+        </div>
+        
+        <div className="summary-item">
+          <div className="summary-label">Email Address</div>
+          <div className="summary-value">{data.email || '—'}</div>
+        </div>
+      </div>
+      
+      <div className="summary-note">
+        ✓ All information has been successfully recorded
+      </div>
     </div>
   )
 }
@@ -14,10 +30,13 @@ function Summary() {
 export default function StepperDemo() {
   return (
     <div className="demo">
-      <h2>Multi-step Form (Compound + Render Props)</h2>
+      <h2>Registration Form</h2>
+      <p style={{fontSize: '12px', color: '#666', marginBottom: '16px'}}>
+        ⌨️ <strong>Keyboard Navigation:</strong> Use <kbd>Tab</kbd> to focus steps, <kbd>←</kbd><kbd>→</kbd> to navigate, <kbd>Enter</kbd> to activate
+      </p>
       <Stepper initial={0} linear={false}>
         <div className="stepper-header">
-          <h3>Registration</h3>
+          <h3>Complete Your Details</h3>
           <StepIndicator />
         </div>
 
@@ -48,12 +67,24 @@ export default function StepperDemo() {
             )}
           </Step>
 
-          <Step title="Contact">
-            {({ active, data, setData, goNext, goPrev, setStatus }) => (
+          <Step title="Contact" validate={(data) => {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            return !!data.email && emailRegex.test(data.email)
+          }}>
+            {({ active, data, setData, goNext, goPrev, setStatus }) => {
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+              const isValidEmail = data.email && emailRegex.test(data.email)
+              return (
               <div className="card" hidden={!active}>
                 <label className="field">
                   <div className="field-label">Email</div>
-                  <input className="input" value={data.email || ''} onChange={(e) => setData({ ...data, email: e.target.value })} />
+                  <input 
+                    className={`input ${data.email && !isValidEmail ? 'error' : ''}`} 
+                    value={data.email || ''} 
+                    onChange={(e) => setData({ ...data, email: e.target.value })} 
+                    placeholder="example@domain.com"
+                  />
+                  {data.email && !isValidEmail && <div className="error-text">Please enter a valid email address</div>}
                 </label>
                 <div className="controls">
                   <button onClick={goPrev} className="btn">Back</button>
@@ -62,13 +93,14 @@ export default function StepperDemo() {
                       const ok = await goNext()
                       if (ok) setStatus('complete')
                     }}
+                    disabled={!isValidEmail}
                     className="btn primary"
                   >
                     Next
                   </button>
                 </div>
               </div>
-            )}
+            )}}
           </Step>
 
           <Step title="Confirm">
