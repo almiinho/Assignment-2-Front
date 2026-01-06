@@ -1,8 +1,18 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Stepper, Step, StepNav, StepIndicator, useStepper } from '../lib/Stepper'
 
 // Simulated database of registered emails
 const REGISTERED_EMAILS = new Set(['john@example.com', 'jane@test.com', 'admin@company.com'])
+
+// Simulated async API call to verify email uniqueness
+const verifyEmailUniqueness = async (email) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const isAvailable = !REGISTERED_EMAILS.has(email.toLowerCase())
+      resolve({ isAvailable })
+    }, 800) // Simulate network delay
+  })
+}
 
 function Summary() {
   const { data } = useStepper()
@@ -77,25 +87,46 @@ export default function StepperDemo() {
 
           <Step title="Contact" validate={(data) => {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-            return !!data.email && emailRegex.test(data.email) && !REGISTERED_EMAILS.has(data.email.toLowerCase())
+            return !!data.email && emailRegex.test(data.email)
           }}>
             {({ active, data, setData, goNext, goPrev, setStatus }) => {
               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
               const isValidEmail = data.email && emailRegex.test(data.email)
-              const isEmailTaken = data.email && REGISTERED_EMAILS.has(data.email.toLowerCase())
-              const isReady = isValidEmail && !isEmailTaken
+              const [checking, setChecking] = useState(false)
+              const [emailAvailable, setEmailAvailable] = useState(null)
+
+              useEffect(() => {
+                if (!isValidEmail) {
+                  setEmailAvailable(null)
+                  return
+                }
+
+                const timer = setTimeout(async () => {
+                  setChecking(true)
+                  const result = await verifyEmailUniqueness(data.email)
+                  setEmailAvailable(result.isAvailable)
+                  setChecking(false)
+                }, 500)
+
+                return () => clearTimeout(timer)
+              }, [data.email, isValidEmail])
+
+              const isReady = isValidEmail && emailAvailable === true && !checking
+              
               return (
               <div className="card" hidden={!active}>
                 <label className="field">
                   <div className="field-label">Email</div>
                   <input 
-                    className={`input ${data.email && !isReady ? 'error' : ''}`} 
+                    className={`input ${data.email && !isValidEmail ? 'error' : ''} ${data.email && emailAvailable === false ? 'error' : ''}`} 
                     value={data.email || ''} 
                     onChange={(e) => setData({ ...data, email: e.target.value })} 
                     placeholder="example@domain.com"
                   />
                   {data.email && !isValidEmail && <div className="error-text">Please enter a valid email address</div>}
-                  {isEmailTaken && <div className="error-text">This email is already registered</div>}
+                  {isValidEmail && checking && <div className="checking-text">🔍 Checking availability...</div>}
+                  {emailAvailable === false && <div className="error-text">❌ This email is already registered</div>}
+                  {emailAvailable === true && !checking && <div className="success-text">✓ Email is available</div>}
                 </label>
                 <div className="controls">
                   <button onClick={goPrev} className="btn">Back</button>
