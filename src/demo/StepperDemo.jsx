@@ -1,5 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Stepper, Step, StepNav, StepIndicator, useStepper } from '../lib/Stepper'
+
+// Simulated database of registered emails
+const REGISTERED_EMAILS = new Set(['john@example.com', 'jane@test.com', 'admin@company.com'])
 
 function Summary() {
   const { data } = useStepper()
@@ -31,9 +34,14 @@ export default function StepperDemo() {
   return (
     <div className="demo">
       <h2>Registration Form</h2>
-      <p style={{fontSize: '12px', color: '#666', marginBottom: '16px'}}>
-        ⌨️ <strong>Keyboard Navigation:</strong> Use <kbd>Tab</kbd> to focus steps, <kbd>←</kbd><kbd>→</kbd> to navigate, <kbd>Enter</kbd> to activate
-      </p>
+      <div className="info-box">
+        <p style={{fontSize: '12px', color: '#666', marginBottom: '16px'}}>
+          ⌨️ <strong>Keyboard Navigation:</strong> Use <kbd>Tab</kbd> to focus steps, <kbd>←</kbd><kbd>→</kbd> to navigate, <kbd>Enter</kbd> to activate
+        </p>
+        <p style={{fontSize: '12px', color: '#666', margin: 0}}>
+          🔒 <strong>Email Verification:</strong> Try john@example.com, jane@test.com to test uniqueness check
+        </p>
+      </div>
       <Stepper initial={0} linear={false}>
         <div className="stepper-header">
           <h3>Complete Your Details</h3>
@@ -69,22 +77,25 @@ export default function StepperDemo() {
 
           <Step title="Contact" validate={(data) => {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-            return !!data.email && emailRegex.test(data.email)
+            return !!data.email && emailRegex.test(data.email) && !REGISTERED_EMAILS.has(data.email.toLowerCase())
           }}>
             {({ active, data, setData, goNext, goPrev, setStatus }) => {
               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
               const isValidEmail = data.email && emailRegex.test(data.email)
+              const isEmailTaken = data.email && REGISTERED_EMAILS.has(data.email.toLowerCase())
+              const isReady = isValidEmail && !isEmailTaken
               return (
               <div className="card" hidden={!active}>
                 <label className="field">
                   <div className="field-label">Email</div>
                   <input 
-                    className={`input ${data.email && !isValidEmail ? 'error' : ''}`} 
+                    className={`input ${data.email && !isReady ? 'error' : ''}`} 
                     value={data.email || ''} 
                     onChange={(e) => setData({ ...data, email: e.target.value })} 
                     placeholder="example@domain.com"
                   />
                   {data.email && !isValidEmail && <div className="error-text">Please enter a valid email address</div>}
+                  {isEmailTaken && <div className="error-text">This email is already registered</div>}
                 </label>
                 <div className="controls">
                   <button onClick={goPrev} className="btn">Back</button>
@@ -93,7 +104,7 @@ export default function StepperDemo() {
                       const ok = await goNext()
                       if (ok) setStatus('complete')
                     }}
-                    disabled={!isValidEmail}
+                    disabled={!isReady}
                     className="btn primary"
                   >
                     Next
