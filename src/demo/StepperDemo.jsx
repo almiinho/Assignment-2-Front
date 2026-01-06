@@ -126,7 +126,6 @@ export default function StepperDemo() {
                   {data.email && !isValidEmail && <div className="error-text">Please enter a valid email address</div>}
                   {isValidEmail && checking && <div className="checking-text">🔍 Checking availability...</div>}
                   {emailAvailable === false && <div className="error-text">❌ This email is already registered</div>}
-                  {emailAvailable === true && !checking && <div className="success-text">✓ Email is available</div>}
                 </label>
                 <div className="controls">
                   <button onClick={goPrev} className="btn">Back</button>
@@ -157,7 +156,11 @@ export default function StepperDemo() {
                 </p>
                 <div className="controls">
                   <button onClick={goPrev} className="btn">Back</button>
-                  <button onClick={() => alert('Submitted!')} className="btn primary">Submit</button>
+                  <button onClick={() => {
+                    // Save email to registered list
+                    REGISTERED_EMAILS.add(data.email.toLowerCase())
+                    alert('✓ Registration successful! Your email has been registered.')
+                  }} className="btn primary">Submit</button>
                 </div>
               </div>
             )}
